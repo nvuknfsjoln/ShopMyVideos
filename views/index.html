@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShopMyVideos – Altersfreigabe</title>
+  <link rel="stylesheet" href="/css/dark-theme.css" />
+</head>
+<body>
+  <div class="age-gate">
+    <h1>Willkommen bei ShopMyVideos</h1>
+    <p>Diese Seite enthält Inhalte, die erst ab 18 Jahren erlaubt sind.</p>
+    <p>Bitte bestätige dein Alter:</p>
+    <button onclick="confirmAge(true)">Ich bin über 18</button>
+    <button onclick="confirmAge(false)">Ich bin unter 18</button>
+
+    <div class="legal-links">
+      <a href="/impressum.html">Impressum</a> |
+      <a href="/datenschutz.html">Datenschutz</a> |
+      <a href="/agb.html">AGB</a>
+    </div>
+  </div>
+
+  <script>
+    function confirmAge(over18) {
+      if (over18) {
+        localStorage.setItem("ageConfirmed", "true");
+        window.location.href = "/shop.html";
+      } else {
+        alert("Der Zugriff ist erst ab 18 erlaubt.");
+        window.location.href = "https://www.google.de";
+      }
+    }
+
+    // Automatisch weiterleiten, wenn bereits bestätigt
+    if (localStorage.getItem("ageConfirmed") === "true") {
+      window.location.href = "/shop.html";
+    }
+  </script>
+</body>
+</html>
