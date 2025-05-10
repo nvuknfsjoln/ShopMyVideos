@@ -2,6 +2,10 @@ const express = require('express');
 const router = express.Router();
 const shopController = require('../../controllers/shopController');
 
+router.get('/products', getAllProducts); // <== HIER passiert der Fehler!
+
+module.exports = router;
+
 // Altersfreigabe anzeigen
 router.get('/age-check', shopController.getAgeCheck);
 
