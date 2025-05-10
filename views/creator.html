@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Creator Dashboard</title>
+  <link rel="stylesheet" href="/css/dark-theme.css" />
+</head>
+<body>
+  <header>
+    <h1>Creator-Bereich</h1>
+  </header>
+
+  <main>
+    <div id="login-area">
+      <h2>Login</h2>
+      <input type="email" placeholder="E-Mail" id="email" />
+      <input type="password" placeholder="Passwort" id="password" />
+      <button onclick="login()">Einloggen</button>
+    </div>
+
+    <div id="dashboard" style="display:none;">
+      <h2>Meine Videos</h2>
+      <button onclick="logout()">Abmelden</button>
+      <div id="my-videos"></div>
+    </div>
+  </main>
+
+  <script>
+    function login() {
+      // Platzhalter-Login
+      localStorage.setItem("creatorToken", "fake-token");
+      document.getElementById("login-area").style.display = "none";
+      document.getElementById("dashboard").style.display = "block";
+    }
+
+    function logout() {
+      localStorage.removeItem("creatorToken");
+      location.reload();
+    }
+
+    if (localStorage.getItem("creatorToken")) {
+      document.getElementById("login-area").style.display = "none";
+      document.getElementById("dashboard").style.display = "block";
+    }
+  </script>
+</body>
+</html>
