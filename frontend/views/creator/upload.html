@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Video hochladen</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header>
+    <h1>Video hochladen</h1>
+  </header>
+  <div class="container">
+    <form action="/api/videos/upload" method="POST" enctype="multipart/form-data">
+      <input type="text" name="title" placeholder="Titel" required><br><br>
+      <textarea name="description" placeholder="Beschreibung" required></textarea><br><br>
+      <input type="file" name="video" accept="video/*" required><br><br>
+      <button type="submit">Hochladen</button>
+    </form>
+  </div>
+</body>
+</html>
