@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Creator Login</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header>
+    <h1>Creator Login</h1>
+  </header>
+  <div class="container">
+    <form action="/api/auth/login" method="POST">
+      <input type="email" name="email" placeholder="E-Mail" required><br><br>
+      <input type="password" name="password" placeholder="Passwort" required><br><br>
+      <input type="hidden" name="role" value="creator">
+      <button type="submit">Einloggen</button>
+    </form>
+  </div>
+</body>
+</html>
