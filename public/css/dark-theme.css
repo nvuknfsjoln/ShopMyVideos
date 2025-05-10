@@ -1,0 +1,21 @@
+/* public/css/dark-theme.css */
+
+body {
+  background-color: #121212;
+  color: #ffffff;
+  font-family: Arial, sans-serif;
+}
+
+a {
+  color: #bb86fc;
+}
+
+button {
+  background-color: #1f1f1f;
+  color: #ffffff;
+  border: 1px solid #333;
+}
+
+.navbar {
+  background-color: #1e1e1e;
+}
