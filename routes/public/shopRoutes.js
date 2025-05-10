@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const shopController = require('../../controllers/public/shopController');
+const shopController = require('../../controllers/shopController');
 
 // Altersfreigabe anzeigen
 router.get('/age-check', shopController.getAgeCheck);
