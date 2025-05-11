@@ -1,7 +1,7 @@
 // routes/creator/coupons.js
 const express = require('express');
 const router = express.Router();
-const { requireCreatorAuth } = require('../../middleware/auth');
+const { requireCreatorAuth } = require('../../middleware/authCreator');
 const { listCoupons, createCoupon, deleteCoupon } = require('../../controllers/couponController');
 
 // Middleware: nur eingeloggt
