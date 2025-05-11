@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const session = require('express-session');
 const flash = require('connect-flash');
 const path = require('path');
+const cookieParser = require('cookie-parser');
+const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 const app = express();
 
@@ -15,6 +17,11 @@ mongoose.connect(process.env.MONGO_URI, {
   useUnifiedTopology: true
 }).then(() => console.log('MongoDB verbunden'))
   .catch(err => console.error('MongoDB Fehler:', err));
+
+app.use(cookieParser());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 // Middlewares
 app.use(express.urlencoded({ extended: true }));
