@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <%- include('../partials/header') %>
+  <title>Gutscheine verwalten</title>
+</head>
+<body>
+  <main>
+    <h1>Alle Gutscheine</h1>
+
+    <form action="/admin/coupons" method="POST">
+      <input type="text" name="code" placeholder="Code" required />
+      <input type="number" name="discount" placeholder="Rabatt (%)" required />
+      <button type="submit">Hinzufügen</button>
+    </form>
+
+    <ul>
+      <% coupons.forEach(coupon => { %>
+        <li><%= coupon.code %> – <%= coupon.discount %>%</li>
+      <% }) %>
+    </ul>
+  </main>
+</body>
+</html>
