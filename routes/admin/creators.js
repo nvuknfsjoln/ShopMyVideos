@@ -1,7 +1,7 @@
 // routes/admin/creators.js
 const express = require('express');
 const router = express.Router();
-const { requireAdminAuth } = require('../../middleware/auth');
+const { requireAdminAuth } = require('../../middleware/authAdmin');
 const { listCreators, deleteCreator } = require('../../controllers/creatorController');
 
 router.use(requireAdminAuth);
