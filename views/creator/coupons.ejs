@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <%- include('../partials/header') %>
+  <title>Deine Gutscheine</title>
+</head>
+<body>
+  <main>
+    <h1>Gutscheincodes verwalten</h1>
+    
+    <form action="/creator/coupons" method="POST">
+      <label for="code">Neuer Code:</label>
+      <input type="text" name="code" id="code" required />
+      
+      <label for="discount">Rabatt (%):</label>
+      <input type="number" name="discount" id="discount" min="1" max="100" required />
+      
+      <button type="submit">Gutschein hinzufügen</button>
+    </form>
+
+    <h2>Bestehende Gutscheine</h2>
+    <% if (coupons.length > 0) { %>
+      <ul>
+        <% coupons.forEach(coupon => { %>
+          <li><strong><%= coupon.code %></strong> – <%= coupon.discount %>% Rabatt</li>
+        <% }) %>
+      </ul>
+    <% } else { %>
+      <p>Du hast noch keine Gutscheine erstellt.</p>
+    <% } %>
+  </main>
+</body>
+</html>
