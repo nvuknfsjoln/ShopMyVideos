@@ -1,0 +1,62 @@
+<!-- views/shop/index.ejs -->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>ShopMyVideos</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #f1f1f1;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 2rem;
+    }
+
+    h1 {
+      color: #ffffff;
+      margin-bottom: 2rem;
+    }
+
+    .video-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .video-card {
+      background-color: #1e1e1e;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+    }
+
+    .video-card h2 {
+      font-size: 1.2rem;
+      margin: 0 0 0.5rem;
+    }
+
+    .video-card p {
+      margin: 0;
+      color: #bbbbbb;
+    }
+  </style>
+</head>
+<body>
+  <h1>Willkommen im Shop</h1>
+
+  <div class="video-list">
+    <% if (videos && videos.length > 0) { %>
+      <% videos.forEach(video => { %>
+        <div class="video-card">
+          <h2><%= video.title %></h2>
+          <p><%= video.description %></p>
+          <p><strong><%= video.price %>€</strong></p>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <p>Es sind aktuell keine Videos verfügbar.</p>
+    <% } %>
+  </div>
+</body>
+</html>
