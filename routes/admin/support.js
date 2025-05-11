@@ -1,7 +1,7 @@
 // routes/admin/support.js
 const express = require('express');
 const router = express.Router();
-const { requireAdminAuth } = require('../../middleware/auth');
+const { requireAdminAuth } = require('../../middleware/authAdmin');
 const { getAllTickets, respondToTicket } = require('../../controllers/supportController');
 
 router.use(requireAdminAuth);
