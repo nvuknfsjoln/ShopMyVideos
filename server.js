@@ -59,6 +59,24 @@ app.use((req, res) => {
   res.status(404).render('error', { message: 'Seite nicht gefunden.' });
 });
 
+// Fehlerbehandlung für nicht gefundene Routen
+app.use((req, res, next) => {
+  const error = new Error('Nicht gefunden');
+  error.status = 404;
+  next(error);
+});
+
+// Globaler Fehler-Handler
+app.use((err, req, res, next) => {
+  console.error(err.stack); // Log in der Konsole (Render Logs)
+  
+  res.status(err.status || 500).json({
+    status: err.status || 500,
+    message: err.message,
+    stack: process.env.NODE_ENV === 'production' ? 'Stack versteckt' : err.stack,
+  });
+});
+
 // Server starten
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server läuft auf Port ${PORT}`));
