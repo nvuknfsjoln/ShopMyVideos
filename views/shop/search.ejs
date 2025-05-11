@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Suchergebnisse</title>
+</head>
+<body>
+  <h1>Suchergebnisse für "<%= query %>"</h1>
+
+  <% if (videos.length === 0) { %>
+    <p>Keine Videos gefunden.</p>
+  <% } else { %>
+    <ul>
+      <% videos.forEach(video => { %>
+        <li>
+          <h2><%= video.title %></h2>
+          <p>Erstellt von: <%= video.creator ? video.creator.name : 'Unbekannt' %></p>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+</body>
+</html>
