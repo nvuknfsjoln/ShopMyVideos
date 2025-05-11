@@ -1,5 +1,3 @@
-// controllers/shopController.js
-
 // Dummy-Daten – später durch Datenbank ersetzen
 const videos = [
   { id: '1', title: 'Funny Cats Compilation', price: 9.99 },
@@ -7,29 +5,39 @@ const videos = [
   { id: '3', title: 'Top 10 Travel Destinations', price: 14.99 },
 ];
 
-// Startseite
-exports.getHome = (req, res) => {
-  res.render('shop/home', {
-    title: 'ShopMyVideos – Deine Videoplattform',
-  });
+// Altersabfrage (wird in routes/client/shop.js verwendet)
+exports.checkAgeCookie = (req, res, next) => {
+  if (!req.cookies.isAdult) {
+    return res.redirect('/age-check'); // Falls kein Alterscookie gesetzt ist
+  }
+  next(); // Weiter zur nächsten Middleware/Route
 };
 
 // Alle Videos anzeigen
-exports.getAllVideos = (req, res) => {
-  res.render('shop/videos', {
-    title: 'Alle Videos',
-    videos,
+exports.loadVideos = async () => {
+  // Hier könnte später eine Datenbankabfrage stattfinden
+  return videos;
+};
+
+// Videos filtern
+exports.filterVideos = async (filters) => {
+  // Hier könnten Filter auf die Videos angewendet werden
+  return videos.filter(video => {
+    return (!filters.price || video.price <= filters.price);
   });
 };
 
-// Einzelnes Video anzeigen
-exports.getVideoById = (req, res) => {
-  const video = videos.find(v => v.id === req.params.id);
-  if (!video) {
-    return res.status(404).send('Video nicht gefunden');
+// Videos durchsuchen
+exports.searchVideos = async (query) => {
+  // Sucht Videos basierend auf dem Suchbegriff
+  return videos.filter(video => video.title.toLowerCase().includes(query.toLowerCase()));
+};
+
+// Gutscheincode prüfen
+exports.checkCoupon = async (code) => {
+  // Dummy-Logik für Gutscheinprüfung
+  if (code === 'DISCOUNT10') {
+    return { success: true, discount: 10 };
   }
-  res.render('shop/video-detail', {
-    title: video.title,
-    video,
-  });
+  return { success: false };
 };
