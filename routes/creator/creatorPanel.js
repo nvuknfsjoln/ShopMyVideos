@@ -1,21 +1,21 @@
 const express = require('express');
 const router = express.Router();
-const creatorPanelController = require('../../controllers/creator/creatorPanelController');
+const creatorController = require('../../controllers/creatorController');
 
 // Creator-Dashboard: Umsätze anzeigen
-router.get('/dashboard', creatorPanelController.getDashboard);
+router.get('/dashboard', creatorController.getDashboard);
 
 // Video erstellen
-router.post('/upload', creatorPanelController.uploadVideo);
+router.post('/upload', creatorController.uploadVideo);
 
 // Eigene Videos auflisten
-router.get('/videos', creatorPanelController.getMyVideos);
+router.get('/videos', creatorController.getMyVideos);
 
 // Video bearbeiten (nur eigene)
-router.put('/video/:id', creatorPanelController.updateMyVideo);
+router.put('/video/:id', creatorController.updateMyVideo);
 
 // Video offline nehmen / online stellen / löschen
-router.patch('/video/:id/status', creatorPanelController.changeStatus);
-router.delete('/video/:id', creatorPanelController.deleteVideo);
+router.patch('/video/:id/status', creatorController.changeStatus);
+router.delete('/video/:id', creatorController.deleteVideo);
 
 module.exports = router;
