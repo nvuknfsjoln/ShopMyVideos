@@ -1,42 +1,42 @@
 const express = require('express');
 const router = express.Router();
-const adminPanelController = require('../../controllers/admin/adminPanelController');
+const adminController = require('../../controllers/adminController');
 
 // Dashboard: Umsätze, Statistiken
-router.get('/dashboard', adminPanelController.getDashboard);
+router.get('/dashboard', adminController.getDashboard);
 
 // Videos
-router.post('/videos/upload', adminPanelController.uploadVideo);
-router.get('/videos', adminPanelController.getAllVideos);
-router.put('/videos/:id', adminPanelController.updateVideo);
-router.patch('/videos/:id/status', adminPanelController.toggleVideoStatus);
-router.delete('/videos/:id', adminPanelController.deleteVideo);
+router.post('/videos/upload', adminController.uploadVideo);
+router.get('/videos', adminController.getAllVideos);
+router.put('/videos/:id', adminController.updateVideo);
+router.patch('/videos/:id/status', adminController.toggleVideoStatus);
+router.delete('/videos/:id', adminController.deleteVideo);
 
 // Admin-Verwaltung
-router.get('/admins', adminPanelController.getAdmins);
-router.put('/admins/:id', adminPanelController.updateAdmin);
-router.patch('/admins/:id/status', adminPanelController.toggleAdminStatus);
-router.delete('/admins/:id', adminPanelController.deleteAdmin);
+router.get('/admins', adminController.getAdmins);
+router.put('/admins/:id', adminController.updateAdmin);
+router.patch('/admins/:id/status', adminController.toggleAdminStatus);
+router.delete('/admins/:id', adminController.deleteAdmin);
 
 // Creator-Bewerbungen
-router.get('/creators/applications', adminPanelController.getCreatorApplications);
-router.post('/creators/:id/approve', adminPanelController.approveCreator);
-router.post('/creators/:id/deny', adminPanelController.denyCreator);
+router.get('/creators/applications', adminController.getCreatorApplications);
+router.post('/creators/:id/approve', adminController.approveCreator);
+router.post('/creators/:id/deny', adminController.denyCreator);
 
 // Creator-Verwaltung
-router.get('/creators', adminPanelController.getCreators);
-router.put('/creators/:id', adminPanelController.updateCreator);
-router.patch('/creators/:id/status', adminPanelController.toggleCreatorStatus);
-router.delete('/creators/:id', adminPanelController.deleteCreator);
+router.get('/creators', adminController.getCreators);
+router.put('/creators/:id', adminController.updateCreator);
+router.patch('/creators/:id/status', adminController.toggleCreatorStatus);
+router.delete('/creators/:id', adminController.deleteCreator);
 
 // Gutscheine
-router.post('/coupons/create', adminPanelController.createCoupon);
-router.get('/coupons', adminPanelController.getAllCoupons);
-router.patch('/coupons/:id/status', adminPanelController.toggleCouponStatus);
-router.delete('/coupons/:id', adminPanelController.deleteCoupon);
+router.post('/vouchers/create', adminController.createVoucher);
+router.get('/vouchers', adminController.getAllVouchers);
+router.patch('/vouchers/:id/status', adminController.toggleVoucherStatus);
+router.delete('/voucher/:id', adminController.deleteVoucher);
 
 // Supportnachrichten
-router.get('/support/messages', adminPanelController.getSupportMessages);
-router.delete('/support/messages', adminPanelController.deleteMultipleMessages);
+router.get('/support/messages', adminController.getSupportMessages);
+router.delete('/support/messages', adminController.deleteMultipleMessages);
 
 module.exports = router;
