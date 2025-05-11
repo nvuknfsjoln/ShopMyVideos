@@ -1,7 +1,7 @@
 // routes/admin/videos.js
 const express = require('express');
 const router = express.Router();
-const { requireAdminAuth } = require('../../middleware/auth');
+const { requireAdminAuth } = require('../../middleware/authAdmin');
 const { listAllVideos, deleteVideo } = require('../../controllers/videoController');
 
 router.use(requireAdminAuth);
