@@ -2,6 +2,12 @@
 const express = require('express');
 const router = express.Router();
 const { checkAgeCookie, loadVideos, filterVideos, searchVideos, checkCoupon } = require('../../controllers/shopController');
+// routes/client/shop.js
+const ageCheck = require('../../middleware/ageCheck');
+
+router.get('/shop', ageCheck, (req, res) => {
+    // Shop-Logik hier
+});
 
 // Altersabfrage
 router.get('/age-check', (req, res) => {
