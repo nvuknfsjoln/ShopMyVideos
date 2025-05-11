@@ -1,7 +1,7 @@
 // routes/creator/dashboard.js
 const express = require('express');
 const router = express.Router();
-const { requireCreatorAuth } = require('../../middleware/auth');
+const { requireCreatorAuth } = require('../../middleware/authCreator');
 const { getVideosByCreator, uploadVideo, deleteVideo } = require('../../controllers/creatorController');
 
 // Middleware: nur eingeloggt
