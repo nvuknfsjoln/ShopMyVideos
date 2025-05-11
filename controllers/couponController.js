@@ -21,3 +21,25 @@ exports.deleteCoupon = async (id) => {
 exports.getCouponByCode = async (code) => {
   return await Coupon.findOne({ code });
 };
+
+exports.createCoupon = async (req, res) => {
+    const { code, discountAmount, expirationDate } = req.body;
+
+    const newCoupon = new Coupon({ code, discountAmount, expirationDate });
+
+    try {
+        await newCoupon.save();
+        res.status(201).json({ message: 'Coupon created successfully', coupon: newCoupon });
+    } catch (error) {
+        res.status(500).json({ message: 'Error creating coupon', error });
+    }
+};
+
+exports.getCoupons = async (req, res) => {
+    try {
+        const coupons = await Coupon.find();
+        res.json(coupons);
+    } catch (error) {
+        res.status(500).json({ message: 'Error retrieving coupons', error });
+    }
+};
