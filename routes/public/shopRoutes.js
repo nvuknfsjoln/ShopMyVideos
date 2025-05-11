@@ -18,7 +18,7 @@ router.get('/search', shopController.searchVideos);
 router.get('/video/:id', shopController.getVideoById);
 
 // Gutscheincode prüfen
-router.post('/check-coupon', shopController.checkCoupon);
+router.post('/check-voucher', shopController.checkVoucher);
 
 // Videos nach Filtern abrufen
 router.post('/filter', shopController.getFilteredVideos);
