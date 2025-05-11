@@ -1,0 +1,97 @@
+:root {
+  --background-color: #121212;
+  --primary-color: #e50914;
+  --text-color: #ffffff;
+  --accent-color: #2a2a2a;
+  --border-radius: 10px;
+  --transition-speed: 0.3s;
+}
+
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: color var(--transition-speed);
+}
+
+a:hover {
+  color: #ff3c3c;
+}
+
+.header {
+  background-color: var(--accent-color);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.search-bar input {
+  padding: 8px;
+  border-radius: var(--border-radius);
+  border: none;
+  width: 200px;
+}
+
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.video-card {
+  background-color: var(--accent-color);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  position: relative;
+  transition: transform var(--transition-speed);
+}
+
+.video-card:hover {
+  transform: scale(1.05);
+}
+
+.thumbnail {
+  width: 100%;
+  display: block;
+}
+
+.video-title {
+  padding: 10px;
+  font-size: 1rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+.comment-section {
+  padding: 10px;
+  background-color: #1e1e1e;
+  border-top: 1px solid #333;
+  display: none;
+}
+
+.comment-section.open {
+  display: block;
+}
+
+@media screen and (max-width: 768px) {
+  .search-bar input {
+    width: 100px;
+  }
+}
