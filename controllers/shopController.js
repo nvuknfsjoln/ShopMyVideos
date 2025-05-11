@@ -1,6 +1,6 @@
 const Video = require('../models/Video');
 const Category = require('../models/Category');
-const Coupon = require('../models/Coupon'); // Falls du Coupon-Codes nutzt
+const Coupon = require('../models/Voucher'); // Falls du Coupon-Codes nutzt
 
 // === Produkte anzeigen ===
 exports.getAllProducts = async (req, res) => {
@@ -84,14 +84,14 @@ exports.getAgeCheck = (req, res) => {
 };
 
 // === Gutscheincode prüfen ===
-exports.checkCoupon = async (req, res) => {
+exports.checkVoucher = async (req, res) => {
   const { code } = req.body;
   try {
-    const coupon = await Coupon.findOne({ code });
+    const voucher = await Voucher.findOne({ code });
     if (!coupon) {
       return res.status(404).json({ valid: false, message: 'Ungültiger Gutscheincode' });
     }
-    res.status(200).json({ valid: true, discount: coupon.discount });
+    res.status(200).json({ valid: true, discount: voucher.discount });
   } catch (error) {
     res.status(500).json({ message: 'Fehler bei der Gutscheinprüfung' });
   }
