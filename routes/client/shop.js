@@ -14,6 +14,17 @@ router.post('/age-confirm', (req, res) => {
   res.redirect('/');
 });
 
+// routes/client/shop.js
+router.post('/verify-age', (req, res) => {
+    const age = parseInt(req.body.age, 10);
+    if (age >= 18) {
+        res.cookie('ageVerified', true, { maxAge: 24 * 60 * 60 * 1000 }); // 1 Tag gültig
+        res.redirect('/shop');
+    } else {
+        res.send('Zugriff verweigert: Sie müssen mindestens 18 Jahre alt sein.');
+    }
+});
+
 // Startseite
 router.get('/', checkAgeCookie, async (req, res) => {
   const videos = await loadVideos(); // Top Videos laden
