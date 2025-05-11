@@ -1,19 +1,19 @@
 // controllers/supportController.js
-const SupportTicket = require('../models/SupportTicket');
+const SupportMessage = require('../models/SupportMessage');
 
-exports.getAllTickets = async () => {
-  return await SupportTicket.find().populate('creator');
+exports.getAllMessages = async () => {
+  return await SupportMessage.find().populate('creator');
 };
 
-exports.getTicketsByCreator = async (creatorId) => {
-  return await SupportTicket.find({ creator: creatorId });
+exports.getMessagesByCreator = async (creatorId) => {
+  return await SupportMessage.find({ creator: creatorId });
 };
 
-exports.createTicket = async (data) => {
-  const ticket = new SupportTicket(data);
-  return await ticket.save();
+exports.createMessage = async (data) => {
+  const Message = new SupportMessage(data);
+  return await Message.save();
 };
 
-exports.respondToTicket = async (id, responseText) => {
-  return await SupportTicket.findByIdAndUpdate(id, { response: responseText, status: 'answered' });
+exports.respondToMessage = async (id, responseText) => {
+  return await SupportMessage.findByIdAndUpdate(id, { response: responseText, status: 'answered' });
 };
