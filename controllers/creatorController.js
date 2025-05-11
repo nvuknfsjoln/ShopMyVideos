@@ -31,6 +31,21 @@ exports.loginCreator = async (req, res) => {
   }
 };
 
+// Dashboard (z. B. Videoanzahl und Einnahmen)
+exports.getDashboard = async (req, res) => {
+  const { creatorName } = req.query;
+  try {
+    const videos = await Video.find({ creatorName });
+    const totalEarnings = videos.reduce((sum, v) => sum + (v.price || 0), 0);
+    res.status(200).json({
+      videoCount: videos.length,
+      totalEarnings,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Fehler beim Laden des Dashboards' });
+  }
+};
+
 // Video hochladen
 exports.uploadVideo = async (req, res) => {
   const { title, price, categories, creatorName } = req.body;
@@ -43,13 +58,52 @@ exports.uploadVideo = async (req, res) => {
   }
 };
 
-// Videos des Creators anzeigen
-exports.getCreatorVideos = async (req, res) => {
-  const { creatorName } = req.params;
+// Eigene Videos anzeigen
+exports.getMyVideos = async (req, res) => {
+  const { creatorName } = req.query;
   try {
     const videos = await Video.find({ creatorName });
     res.status(200).json(videos);
   } catch (error) {
     res.status(500).json({ message: 'Fehler beim Laden der Videos' });
+  }
+};
+
+// Video bearbeiten
+exports.updateMyVideo = async (req, res) => {
+  const { id } = req.params;
+  const { title, price, categories } = req.body;
+  try {
+    const updatedVideo = await Video.findByIdAndUpdate(
+      id,
+      { title, price, categories },
+      { new: true }
+    );
+    res.status(200).json({ message: 'Video aktualisiert', video: updatedVideo });
+  } catch (error) {
+    res.status(500).json({ message: 'Fehler beim Aktualisieren des Videos' });
+  }
+};
+
+// Video-Status ändern (z. B. online/offline setzen)
+exports.changeStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body; // Beispiel: { status: "online" }
+  try {
+    const video = await Video.findByIdAndUpdate(id, { status }, { new: true });
+    res.status(200).json({ message: 'Status aktualisiert', video });
+  } catch (error) {
+    res.status(500).json({ message: 'Fehler beim Ändern des Status' });
+  }
+};
+
+// Video löschen
+exports.deleteVideo = async (req, res) => {
+  const { id } = req.params;
+  try {
+    await Video.findByIdAndDelete(id);
+    res.status(200).json({ message: 'Video gelöscht' });
+  } catch (error) {
+    res.status(500).json({ message: 'Fehler beim Löschen des Videos' });
   }
 };
