@@ -12,13 +12,25 @@ router.get('/login', (req, res) => {
 // Login absenden
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
-  const creator = await getCreatorByEmail(email);
+  const user = await User.findOne({ email });
 
-  if (!creator || !(await bcrypt.compare(password, creator.password))) {
-    return res.render('creator/login', { error: 'Falsche Zugangsdaten' });
+  if (!user) {
+    req.flash('error_msg', 'Benutzer nicht gefunden');
+    return res.redirect('/creator/login');
   }
 
-  req.session.creatorId = creator._id;
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    req.flash('error_msg', 'Passwort falsch');
+    return res.redirect('/creator/login');
+  }
+
+  req.session.user = user;
+
+  if (user.role === 'admin') {
+    return res.redirect('/admin/dashboard');
+  }
+
   res.redirect('/creator/dashboard');
 });
 
