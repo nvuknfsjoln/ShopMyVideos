@@ -1,7 +1,7 @@
 const Admin = require('../models/Admin');
 const Video = require('../models/Video');
 const Creator = require('../models/Creator');
-const Coupon = require('../models/Coupon');
+const Coupon = require('../models/Voucher');
 
 // Admin-Login
 exports.loginAdmin = async (req, res) => {
