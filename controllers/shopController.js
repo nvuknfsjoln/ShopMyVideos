@@ -7,10 +7,17 @@ const videos = [
 
 // Altersabfrage (wird in routes/client/shop.js verwendet)
 exports.checkAgeCookie = (req, res, next) => {
-  if (!req.cookies.isAdult) {
+  // Überprüfen, ob das Cookie existiert und ob isAdult gesetzt ist
+  if (!req.cookies || !req.cookies.isAdult) {
     return res.redirect('/age-check'); // Falls kein Alterscookie gesetzt ist
   }
-  next(); // Weiter zur nächsten Middleware/Route
+
+  // Optional: Überprüfen, ob das Cookie einen gültigen Wert hat (z.B. true/false)
+  if (req.cookies.isAdult !== 'true') {
+    return res.redirect('/age-check'); // Falls isAdult false oder ungültig ist
+  }
+
+  next(); // Weiter zur nächsten Middleware/Route, wenn alles in Ordnung ist
 };
 
 // Alle Videos anzeigen
