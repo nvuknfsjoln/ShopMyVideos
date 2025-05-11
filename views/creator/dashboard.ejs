@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <%- include('../partials/header') %>
+  <title>Creator Dashboard</title>
+</head>
+<body>
+  <main>
+    <h1>Willkommen, <%= creator.username %></h1>
+    <section>
+      <h2>Deine Videos</h2>
+      <% if (videos.length > 0) { %>
+        <ul>
+          <% videos.forEach(video => { %>
+            <li>
+              <strong><%= video.title %></strong> - <%= video.price %> €
+              <a href="/creator/edit/<%= video._id %>">Bearbeiten</a>
+            </li>
+          <% }) %>
+        </ul>
+      <% } else { %>
+        <p>Du hast noch keine Videos hochgeladen.</p>
+      <% } %>
+    </section>
+    <a href="/creator/upload">Neues Video hochladen</a>
+  </main>
+</body>
+</html>
