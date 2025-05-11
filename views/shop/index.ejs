@@ -1,62 +1,116 @@
-<!-- views/shop/index.ejs -->
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ShopMyVideos</title>
+  <link rel="stylesheet" href="/css/style.css" />
   <style>
     body {
       background-color: #121212;
-      color: #f1f1f1;
+      color: #f0f0f0;
       font-family: Arial, sans-serif;
       margin: 0;
-      padding: 2rem;
+      padding: 0;
     }
 
-    h1 {
+    header {
+      background-color: #1e1e1e;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 a {
       color: #ffffff;
-      margin-bottom: 2rem;
+      text-decoration: none;
     }
 
-    .video-list {
+    .search-bar {
+      display: flex;
+      align-items: center;
+    }
+
+    .search-bar input[type="text"] {
+      padding: 5px;
+      border: none;
+      border-radius: 4px;
+    }
+
+    .search-bar button {
+      margin-left: 10px;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      background-color: #3a3a3a;
+      color: #ffffff;
+      cursor: pointer;
+    }
+
+    .video-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+      padding: 20px;
     }
 
     .video-card {
       background-color: #1e1e1e;
-      padding: 1rem;
       border-radius: 8px;
-      box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+      overflow: hidden;
+      transition: transform 0.3s;
     }
 
-    .video-card h2 {
-      font-size: 1.2rem;
-      margin: 0 0 0.5rem;
+    .video-card:hover {
+      transform: scale(1.05);
     }
 
-    .video-card p {
-      margin: 0;
-      color: #bbbbbb;
+    .video-card img {
+      width: 100%;
+      display: block;
+    }
+
+    .video-card h3 {
+      margin: 10px;
+      font-size: 1em;
+    }
+
+    footer {
+      background-color: #1e1e1e;
+      padding: 20px;
+      text-align: center;
+      color: #888888;
     }
   </style>
 </head>
 <body>
-  <h1>Willkommen im Shop</h1>
+  <header>
+    <h1><a href="/">ShopMyVideos</a></h1>
+    <div class="search-bar">
+      <form action="/search" method="get">
+        <input type="text" name="q" placeholder="Suche nach Videos..." />
+        <button type="submit">Suchen</button>
+      </form>
+      <a href="/creator" style="margin-left: 20px; color: #ffffff;">Creator Login</a>
+    </div>
+  </header>
 
-  <div class="video-list">
-    <% if (videos && videos.length > 0) { %>
-      <% videos.forEach(video => { %>
+  <main>
+    <section class="video-grid">
+      <% videos.forEach(function(video) { %>
         <div class="video-card">
-          <h2><%= video.title %></h2>
-          <p><%= video.description %></p>
-          <p><strong><%= video.price %>€</strong></p>
+          <a href="/video/<%= video._id %>">
+            <img src="<%= video.thumbnailUrl %>" alt="<%= video.title %>" />
+            <h3><%= video.title %></h3>
+          </a>
         </div>
-      <% }) %>
-    <% } else { %>
-      <p>Es sind aktuell keine Videos verfügbar.</p>
-    <% } %>
-  </div>
+      <% }); %>
+    </section>
+  </main>
+
+  <footer>
+    &copy; <%= new Date().getFullYear() %> ShopMyVideos. Alle Rechte vorbehalten.
+  </footer>
 </body>
 </html>
