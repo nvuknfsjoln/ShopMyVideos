@@ -1,51 +1,52 @@
-// routes/client/shop.js
 const express = require('express');
 const router = express.Router();
-const { checkAgeCookie, loadVideos, filterVideos, searchVideos, checkCoupon } = require('../../controllers/shopController');
-// routes/client/shop.js
+const {
+  checkCoupon,
+  loadVideos,
+  searchVideos,
+  filterVideos
+} = require('../../controllers/shopController');
+
 const ageCheck = require('../../middleware/ageCheck');
 
-router.get('/shop', ageCheck, (req, res) => {
-    // Shop-Logik hier
-});
-
-// Altersabfrage
+// Altersabfrage-Formular
 router.get('/age-check', (req, res) => {
   res.render('age-check');
 });
 
-// Setzt Alterscookie und leitet weiter
-router.post('/age-confirm', (req, res) => {
-  res.cookie('isAdult', 'true', { maxAge: 1000 * 60 * 60 * 24 * 30 }); // 30 Tage gültig
-  res.redirect('/');
-});
-
-// routes/client/shop.js
+// Altersprüfung: setzt Session und optional Cookie
 router.post('/verify-age', (req, res) => {
-    const age = parseInt(req.body.age, 10);
-    if (age >= 18) {
-        res.cookie('ageVerified', true, { maxAge: 24 * 60 * 60 * 1000 }); // 1 Tag gültig
-        res.redirect('/shop');
-    } else {
-        res.send('Zugriff verweigert: Sie müssen mindestens 18 Jahre alt sein.');
-    }
+  const age = parseInt(req.body.age, 10);
+  if (age >= 18) {
+    req.session.isAdult = true;
+    res.cookie('isAdult', 'true', { maxAge: 1000 * 60 * 60 * 24 * 30 }); // optional
+    return res.redirect('/shop');
+  } else {
+    return res.send('Zugriff verweigert: Sie müssen mindestens 18 Jahre alt sein.');
+  }
 });
 
-// Startseite
-router.get('/', checkAgeCookie, async (req, res) => {
-  const videos = await loadVideos(); // Top Videos laden
+// Shopseite (nur wenn Alter bestätigt)
+router.get('/shop', ageCheck, async (req, res) => {
+  const videos = await loadVideos();
+  res.render('shop/index', { videos });
+});
+
+// Startseite (auch geschützt)
+router.get('/', ageCheck, async (req, res) => {
+  const videos = await loadVideos();
   res.render('shop/index', { videos });
 });
 
 // Suche
-router.get('/search', checkAgeCookie, async (req, res) => {
+router.get('/search', ageCheck, async (req, res) => {
   const query = req.query.q;
   const videos = await searchVideos(query);
   res.render('shop/search', { videos, query });
 });
 
 // Filter
-router.post('/filter', checkAgeCookie, async (req, res) => {
+router.post('/filter', ageCheck, async (req, res) => {
   const filters = req.body;
   const videos = await filterVideos(filters);
   res.render('shop/filter', { videos });
@@ -61,7 +62,6 @@ router.post('/check-coupon', async (req, res) => {
 // Supportnachricht
 router.post('/support', async (req, res) => {
   const { message } = req.body;
-  // Speichere Nachricht in der DB (Support-Tabelle)
   await req.db.collection('supportMessages').insertOne({
     message,
     timestamp: new Date()
