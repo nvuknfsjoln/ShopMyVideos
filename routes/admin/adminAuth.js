@@ -1,14 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const adminAuthController = require('../../controllers/adminController');
+const adminController = require('../../controllers/adminController');
 
-// Admin einloggen
-router.post('/login', adminAuthController.loginAdmin);
+// Gutscheine anzeigen
+router.get('/vouchers', adminController.getAllVouchers);
 
-// Neuen Admin erstellen (nur mit Adminrechten)
-router.post('/create', adminAuthController.createAdmin);
-
-// Admin-Aktion bestätigen (für z. B. Löschungen etc.)
-router.post('/verify', adminAuthController.verifyAdminAccess);
+// Gutscheinanfrage genehmigen
+router.post('/approve-voucher', adminController.approveCreatorVoucher);
 
 module.exports = router;
