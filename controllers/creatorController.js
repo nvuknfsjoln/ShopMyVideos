@@ -1,5 +1,6 @@
 const Creator = require('../models/Creator');
 const Video = require('../models/Video');
+const Voucher = require('../models/Voucher'); // Wichtig: Modell importieren
 
 // Creator anmelden
 exports.registerCreator = async (req, res) => {
@@ -31,7 +32,7 @@ exports.loginCreator = async (req, res) => {
   }
 };
 
-// Dashboard (z. B. Videoanzahl und Einnahmen)
+// Dashboard
 exports.getDashboard = async (req, res) => {
   const { creatorName } = req.query;
   try {
@@ -85,10 +86,10 @@ exports.updateMyVideo = async (req, res) => {
   }
 };
 
-// Video-Status ändern (z. B. online/offline setzen)
+// Video-Status ändern
 exports.changeStatus = async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body; // Beispiel: { status: "online" }
+  const { status } = req.body;
   try {
     const video = await Video.findByIdAndUpdate(id, { status }, { new: true });
     res.status(200).json({ message: 'Status aktualisiert', video });
@@ -105,5 +106,39 @@ exports.deleteVideo = async (req, res) => {
     res.status(200).json({ message: 'Video gelöscht' });
   } catch (error) {
     res.status(500).json({ message: 'Fehler beim Löschen des Videos' });
+  }
+};
+
+// =======================
+// GUTSCHEIN FUNKTIONEN
+// =======================
+
+// Gutschein erstellen (nur für Creator)
+exports.requestVoucher = async (req, res) => {
+  const { code, discount, creatorName } = req.body;
+  try {
+    const existing = await Voucher.findOne({ code });
+    if (existing) {
+      return res.status(400).json({ message: 'Gutscheincode bereits vergeben' });
+    }
+    const newVoucher = new Voucher({ code, discount, creatorName });
+    await newVoucher.save();
+    res.status(201).json({ message: 'Gutschein erstellt', voucher: newVoucher });
+  } catch (error) {
+    res.status(500).json({ message: 'Fehler beim Erstellen des Gutscheins' });
+  }
+};
+
+// Gutschein einlösen (z. B. durch Nutzer beim Kauf)
+exports.redeemVoucher = async (req, res) => {
+  const { code } = req.body;
+  try {
+    const voucher = await Voucher.findOne({ code });
+    if (!voucher) {
+      return res.status(404).json({ message: 'Gutschein nicht gefunden' });
+    }
+    res.status(200).json({ message: 'Gutschein gültig', discount: voucher.discount });
+  } catch (error) {
+    res.status(500).json({ message: 'Fehler beim Einlösen des Gutscheins' });
   }
 };
