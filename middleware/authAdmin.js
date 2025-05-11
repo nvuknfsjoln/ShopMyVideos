@@ -1,10 +1,8 @@
 // middleware/authAdmin.js
 
-const requireAdminAuth = (req, res, next) => {
-  if (req.session && req.session.adminId) {
+module.exports.requireAdminAuth = (req, res, next) => {
+  if (req.session && req.session.user && req.session.user.role === 'admin') {
     return next();
   }
-  res.redirect('/admin/login');
+  return res.redirect('/creator/login'); // absichtlich creator-login
 };
-
-module.exports = { requireAdminAuth };
