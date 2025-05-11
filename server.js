@@ -75,12 +75,13 @@ app.use((req, res, next) => {
 
 // Globaler Fehler-Handler
 app.use((err, req, res, next) => {
-  console.error(err.stack); // Log in der Konsole (Render Logs)
-  
-  res.status(err.status || 500).json({
-    status: err.status || 500,
+  console.error(err.stack);
+
+  res.status(err.status || 500);
+  res.render('error', {
     message: err.message,
-    stack: process.env.NODE_ENV === 'production' ? 'Stack versteckt' : err.stack,
+    status: err.status || 500,
+    stack: process.env.NODE_ENV === 'production' ? null : err.stack,
   });
 });
 
