@@ -14,6 +14,6 @@ const videoSchema = new mongoose.Schema({
 });
 
 // Index für die Textsuche nach Videos
-videoSchema.index({ title: 'text', description: 'text', creatorName: 'text });
+videoSchema.index({ title: 'text', description: 'text', creatorName: 'text' });
 
 module.exports = mongoose.model('Video', videoSchema);
