@@ -2,6 +2,7 @@
   "name": "video-background-worker",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "node index.js"
   },
@@ -14,7 +15,7 @@
     "mongoose": "^8.3.4",
     "node-fetch": "^3.3.2",
     "tmp": "^0.2.1",
-    "fs-extra": "^11.2.0"
-  },
-  "type": "module"
+    "fs-extra": "^11.2.0",
+    "form-data": "^4.0.0"
+  }
 }
