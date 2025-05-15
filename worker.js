@@ -1,39 +1,39 @@
-const fs = require('fs');
-const path = require('path');
-const axios = require('axios');
-const FormData = require('form-data');
-const ffmpeg = require('fluent-ffmpeg');
-const ffmpegPath = require('ffmpeg-static');
-const { MongoClient, ObjectId } = require('mongodb');
+import axios from "axios";
+import ffmpegPath from "ffmpeg-static";
+import ffmpeg from "fluent-ffmpeg";
+import tmp from "tmp";
+import fs from "fs-extra";
+import { B2 } from "b2";
+import mongoose from "mongoose";
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
-const TMP_DIR = '/tmp';
+// MongoDB Video Model
+const videoSchema = new mongoose.Schema({
+  _id: String,
+  sourcePath: String, // B2-Pfad
+  status: String,
+  pixeldrainUrl: String
+}, { strict: false });
+const Video = mongoose.model("Video", videoSchema);
 
-async function removeMetadataAndCompress(inputPath, outputPath) {
-  return new Promise((resolve, reject) => {
-    ffmpeg(inputPath)
-      .outputOptions('-map_metadata', '-1') // entfernt Metadaten
-      .videoCodec('libx264')
-      .audioCodec('aac')
-      .outputOptions(['-crf 28', '-preset veryfast']) // Kompression
-      .save(outputPath)
-      .on('end', () => resolve())
-      .on('error', reject);
-  });
-}
-
+// Pixeldrain Upload
 async function uploadToPixeldrain(filePath) {
-  const form = new FormData();
-  form.append('file', fs.createReadStream(filePath));
-  const headers = form.getHeaders();
-  headers['Authorization'] = `Bearer ${process.env.PIXELDRAIN_API_KEY}`;
+  const data = new FormData();
+  data.append("file", fs.createReadStream(filePath));
 
-  const uploadRes = await axios.post('https://pixeldrain.com/api/file', form, { headers });
-  const fileId = uploadRes.data.id;
+  const res = await axios.post("https://pixeldrain.com/api/file", data, {
+    headers: {
+      ...data.getHeaders(),
+      Authorization: `Bearer ${process.env.PIXELDRAIN_API_KEY}`
+    }
+  });
 
-  // Einstellungen setzen: versteckt + eingebettet
-  await axios.post(`https://pixeldrain.com/api/file/${fileId}/edit`, {
+  const fileId = res.data?.id;
+  if (!fileId) throw new Error("Pixeldrain Upload fehlgeschlagen");
+
+  // Set hidden + embeddable
+  await axios.post(`https://pixeldrain.com/api/file/${fileId}`, {
     hidden: true,
     allow_embed: true
   }, {
@@ -45,41 +45,80 @@ async function uploadToPixeldrain(filePath) {
   return `https://pixeldrain.com/u/${fileId}`;
 }
 
-async function processVideo(job) {
-  const inputPath = path.join(TMP_DIR, job.local_path); // z. B. "abc123.mp4"
-  const outputPath = path.join(TMP_DIR, `compressed-${job.local_path}`);
+// Lade Datei von Backblaze B2
+async function downloadFromB2(b2Path, targetPath) {
+  const b2 = new B2({
+    applicationKeyId: process.env.B2_KEY_ID,
+    applicationKey: process.env.B2_APPLICATION_KEY
+  });
 
-  console.log('🎥 Verarbeite Datei:', inputPath);
+  await b2.authorize();
+  const { data: { authorizationToken, downloadUrl } } = b2;
 
-  await removeMetadataAndCompress(inputPath, outputPath);
-  console.log('✅ Metadaten entfernt & Video komprimiert');
-
-  const finalUrl = await uploadToPixeldrain(outputPath);
-  console.log('📤 Hochgeladen zu Pixeldrain:', finalUrl);
-
-  // MongoDB aktualisieren
-  const client = new MongoClient(process.env.MONGODB_URI);
-  await client.connect();
-  const db = client.db();
-  const jobs = db.collection('video_jobs');
-
-  await jobs.updateOne(
-    { _id: new ObjectId(job._id) },
-    {
-      $set: {
-        final_url: finalUrl,
-        hidden: true,
-        embedded: true
-      }
+  const url = `${downloadUrl}/file/${process.env.B2_BUCKET_NAME}/${b2Path}`;
+  const response = await axios.get(url, {
+    responseType: "stream",
+    headers: {
+      Authorization: authorizationToken
     }
-  );
+  });
 
-  await client.close();
+  const writer = fs.createWriteStream(targetPath);
+  response.data.pipe(writer);
 
-  // Cleanup
-  fs.unlinkSync(inputPath);
-  fs.unlinkSync(outputPath);
-  console.log('🧹 Temporäre Dateien gelöscht');
+  return new Promise((resolve, reject) => {
+    writer.on("finish", resolve);
+    writer.on("error", reject);
+  });
 }
 
-module.exports = { processVideo };
+// Verarbeite ein Video
+async function processVideo(videoDoc) {
+  console.log("🔧 Verarbeite Video:", videoDoc._id);
+
+  const inputTmp = tmp.tmpNameSync({ postfix: ".mp4" });
+  const outputTmp = tmp.tmpNameSync({ postfix: ".mp4" });
+
+  try {
+    await downloadFromB2(videoDoc.sourcePath, inputTmp);
+
+    await new Promise((resolve, reject) => {
+      ffmpeg(inputTmp)
+        .outputOptions("-map_metadata -1")
+        .videoCodec("libx264")
+        .audioCodec("aac")
+        .outputOptions("-crf 28")
+        .on("end", resolve)
+        .on("error", reject)
+        .save(outputTmp);
+    });
+
+    const pixeldrainUrl = await uploadToPixeldrain(outputTmp);
+    videoDoc.status = "completed";
+    videoDoc.pixeldrainUrl = pixeldrainUrl;
+    await videoDoc.save();
+
+    console.log("✅ Upload abgeschlossen:", pixeldrainUrl);
+  } catch (err) {
+    console.error("❌ Fehler:", err);
+    videoDoc.status = "failed";
+    await videoDoc.save();
+  } finally {
+    fs.removeSync(inputTmp);
+    fs.removeSync(outputTmp);
+  }
+}
+
+export default async function runWorker() {
+  const job = await Video.findOneAndUpdate(
+    { status: "pending" },
+    { status: "processing" }
+  );
+
+  if (!job) {
+    console.log("📭 Keine Jobs in der Warteschlange.");
+    return;
+  }
+
+  await processVideo(job);
+}
