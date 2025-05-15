@@ -1,0 +1,16 @@
+{
+  "name": "video-background-worker",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.7",
+    "dotenv": "^16.3.1",
+    "fluent-ffmpeg": "^2.1.2",
+    "form-data": "^4.0.0",
+    "mongoose": "^8.3.3",
+    "backblaze-b2": "^1.6.0"
+  }
+}
