@@ -6,6 +6,12 @@ import fs from "fs-extra";
 import B2 from "backblaze-b2";
 import mongoose from "mongoose";
 import FormData from "form-data";
+import http from 'http';
+
+http.createServer((req, res) => {
+  res.writeHead(200);
+  res.end("Background worker läuft.");
+}).listen(process.env.PORT || 3000);
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
