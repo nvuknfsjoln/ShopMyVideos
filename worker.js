@@ -3,7 +3,7 @@ import ffmpegPath from "ffmpeg-static";
 import ffmpeg from "fluent-ffmpeg";
 import tmp from "tmp";
 import fs from "fs-extra";
-import { B2 } from "b2";
+import B2 from 'backblaze-b2';
 import mongoose from "mongoose";
 
 ffmpeg.setFfmpegPath(ffmpegPath);
