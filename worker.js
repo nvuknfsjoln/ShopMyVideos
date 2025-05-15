@@ -1,60 +1,85 @@
-// worker.js
-const { MongoClient } = require('mongodb');
-const { spawn } = require('child_process');
+const fs = require('fs');
 const path = require('path');
+const axios = require('axios');
+const FormData = require('form-data');
+const ffmpeg = require('fluent-ffmpeg');
+const ffmpegPath = require('ffmpeg-static');
+const { MongoClient, ObjectId } = require('mongodb');
 
-// Konfiguration
-const mongoUri = process.env.MONGO_URI;
-const client = new MongoClient(mongoUri);
+ffmpeg.setFfmpegPath(ffmpegPath);
 
-async function processJobs() {
-  try {
-    await client.connect();
-    console.log('MongoDB verbunden');
+const TMP_DIR = '/tmp';
 
-    const db = client.db('your-database-name'); // ❗ Anpassen
-    const queue = db.collection('video_queue');
-
-    setInterval(async () => {
-      const job = await queue.findOne({ status: 'pending' });
-
-      if (job) {
-        console.log('Job gefunden:', job.filename);
-        await queue.updateOne({ _id: job._id }, { $set: { status: 'processing' } });
-
-        // Beispiel: mit ffmpeg verarbeiten
-        const inputPath = path.join('/mnt/data', job.filename);
-        const outputPath = path.join('/mnt/data', 'processed_' + job.filename);
-
-        const ffmpeg = spawn('ffmpeg', ['-i', inputPath, '-vcodec', 'libx264', outputPath]);
-
-        ffmpeg.on('close', async (code) => {
-          if (code === 0) {
-            console.log('Verarbeitung abgeschlossen:', outputPath);
-
-            // TODO: Hochladen zu B2 (z. B. mit SDK)
-            // await uploadToB2(outputPath);
-
-            await queue.updateOne({ _id: job._id }, {
-              $set: {
-                status: 'done',
-                processedPath: outputPath, // oder URL nach dem Hochladen
-                finishedAt: new Date()
-              }
-            });
-          } else {
-            console.error('Fehler bei Verarbeitung:', code);
-            await queue.updateOne({ _id: job._id }, {
-              $set: { status: 'error', errorCode: code }
-            });
-          }
-        });
-      } else {
-        // Kein Job
-      }
-    }, 10000); // alle 10 Sekunden prüfen
-  } catch (err) {
-    console.error('Fehler beim Verbinden mit MongoDB:', err);
-  }
+async function removeMetadataAndCompress(inputPath, outputPath) {
+  return new Promise((resolve, reject) => {
+    ffmpeg(inputPath)
+      .outputOptions('-map_metadata', '-1') // entfernt Metadaten
+      .videoCodec('libx264')
+      .audioCodec('aac')
+      .outputOptions(['-crf 28', '-preset veryfast']) // Kompression
+      .save(outputPath)
+      .on('end', () => resolve())
+      .on('error', reject);
+  });
 }
-processJobs();
+
+async function uploadToPixeldrain(filePath) {
+  const form = new FormData();
+  form.append('file', fs.createReadStream(filePath));
+  const headers = form.getHeaders();
+  headers['Authorization'] = `Bearer ${process.env.PIXELDRAIN_API_KEY}`;
+
+  const uploadRes = await axios.post('https://pixeldrain.com/api/file', form, { headers });
+  const fileId = uploadRes.data.id;
+
+  // Einstellungen setzen: versteckt + eingebettet
+  await axios.post(`https://pixeldrain.com/api/file/${fileId}/edit`, {
+    hidden: true,
+    allow_embed: true
+  }, {
+    headers: {
+      Authorization: `Bearer ${process.env.PIXELDRAIN_API_KEY}`
+    }
+  });
+
+  return `https://pixeldrain.com/u/${fileId}`;
+}
+
+async function processVideo(job) {
+  const inputPath = path.join(TMP_DIR, job.local_path); // z. B. "abc123.mp4"
+  const outputPath = path.join(TMP_DIR, `compressed-${job.local_path}`);
+
+  console.log('🎥 Verarbeite Datei:', inputPath);
+
+  await removeMetadataAndCompress(inputPath, outputPath);
+  console.log('✅ Metadaten entfernt & Video komprimiert');
+
+  const finalUrl = await uploadToPixeldrain(outputPath);
+  console.log('📤 Hochgeladen zu Pixeldrain:', finalUrl);
+
+  // MongoDB aktualisieren
+  const client = new MongoClient(process.env.MONGODB_URI);
+  await client.connect();
+  const db = client.db();
+  const jobs = db.collection('video_jobs');
+
+  await jobs.updateOne(
+    { _id: new ObjectId(job._id) },
+    {
+      $set: {
+        final_url: finalUrl,
+        hidden: true,
+        embedded: true
+      }
+    }
+  );
+
+  await client.close();
+
+  // Cleanup
+  fs.unlinkSync(inputPath);
+  fs.unlinkSync(outputPath);
+  console.log('🧹 Temporäre Dateien gelöscht');
+}
+
+module.exports = { processVideo };
