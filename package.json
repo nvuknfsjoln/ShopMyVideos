@@ -1,17 +1,20 @@
 {
   "name": "video-background-worker",
   "version": "1.0.0",
-  "description": "Hintergrund-Worker für Videoverarbeitung",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "axios": "^1.6.8",
+    "axios": "^1.6.7",
+    "b2": "^1.4.0",
     "dotenv": "^16.3.1",
-    "ffmpeg-static": "^4.4.0",
+    "ffmpeg-static": "^5.1.0",
     "fluent-ffmpeg": "^2.1.2",
-    "mongodb": "^5.7.0",
-    "form-data": "^4.0.0"
-  }
+    "mongoose": "^8.3.4",
+    "node-fetch": "^3.3.2",
+    "tmp": "^0.2.1",
+    "fs-extra": "^11.2.0"
+  },
+  "type": "module"
 }
