@@ -1,14 +1,47 @@
-// index.js
-const http = require('http');
-const port = process.env.PORT || 3000;
+require('dotenv').config();
+const { MongoClient } = require('mongodb');
+const path = require('path');
+const { processVideo } = require('./worker');
 
-// Starte Dummy-Webserver (für Render)
-http.createServer((req, res) => {
-  res.writeHead(200);
-  res.end('Background Worker läuft!');
-}).listen(port, () => {
-  console.log(`Dummy-Webserver läuft auf Port ${port}`);
-});
+const mongoUri = process.env.MONGODB_URI;
+const client = new MongoClient(mongoUri);
+const POLL_INTERVAL = 15000; // alle 15 Sekunden
 
-// Starte die eigentliche Worker-Logik
-require('./worker');
+async function poll() {
+  try {
+    await client.connect();
+    const db = client.db();
+    const queue = db.collection('video_jobs');
+
+    console.log('✅ MongoDB verbunden, warte auf Jobs...');
+
+    setInterval(async () => {
+      const job = await queue.findOneAndUpdate(
+        { status: 'pending' },
+        { $set: { status: 'processing', startedAt: new Date() } }
+      );
+
+      if (job.value) {
+        console.log(`🔄 Starte Verarbeitung für: ${job.value._id}`);
+        try {
+          await processVideo(job.value);
+          await queue.updateOne(
+            { _id: job.value._id },
+            { $set: { status: 'done', finishedAt: new Date() } }
+          );
+        } catch (err) {
+          console.error('❌ Fehler bei Verarbeitung:', err.message);
+          await queue.updateOne(
+            { _id: job.value._id },
+            { $set: { status: 'error', error: err.message } }
+          );
+        }
+      }
+    }, POLL_INTERVAL);
+  } catch (e) {
+    console.error('❌ MongoDB-Fehler:', e);
+    process.exit(1);
+  }
+}
+
+poll();
