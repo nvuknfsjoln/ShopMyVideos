@@ -1,11 +1,17 @@
 {
   "name": "video-background-worker",
   "version": "1.0.0",
+  "description": "Hintergrund-Worker für Videoverarbeitung",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "mongodb": "^5.7.0"
+    "axios": "^1.6.8",
+    "dotenv": "^16.3.1",
+    "ffmpeg-static": "^4.4.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "mongodb": "^5.7.0",
+    "form-data": "^4.0.0"
   }
 }
