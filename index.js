@@ -1,47 +1,18 @@
-require('dotenv').config();
-const { MongoClient } = require('mongodb');
-const path = require('path');
-const { processVideo } = require('./worker');
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import runWorker from "./worker.js";
 
-const mongoUri = process.env.MONGODB_URI;
-const client = new MongoClient(mongoUri);
-const POLL_INTERVAL = 15000; // alle 15 Sekunden
+dotenv.config();
 
-async function poll() {
+async function start() {
   try {
-    await client.connect();
-    const db = client.db();
-    const queue = db.collection('video_jobs');
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log("✅ MongoDB verbunden");
 
-    console.log('✅ MongoDB verbunden, warte auf Jobs...');
-
-    setInterval(async () => {
-      const job = await queue.findOneAndUpdate(
-        { status: 'pending' },
-        { $set: { status: 'processing', startedAt: new Date() } }
-      );
-
-      if (job.value) {
-        console.log(`🔄 Starte Verarbeitung für: ${job.value._id}`);
-        try {
-          await processVideo(job.value);
-          await queue.updateOne(
-            { _id: job.value._id },
-            { $set: { status: 'done', finishedAt: new Date() } }
-          );
-        } catch (err) {
-          console.error('❌ Fehler bei Verarbeitung:', err.message);
-          await queue.updateOne(
-            { _id: job.value._id },
-            { $set: { status: 'error', error: err.message } }
-          );
-        }
-      }
-    }, POLL_INTERVAL);
-  } catch (e) {
-    console.error('❌ MongoDB-Fehler:', e);
-    process.exit(1);
+    await runWorker(); // einmal starten, kannst du später per setInterval loopen lassen
+  } catch (err) {
+    console.error("❌ Fehler beim Start:", err);
   }
 }
 
-poll();
+start();
