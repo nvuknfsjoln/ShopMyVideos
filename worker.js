@@ -46,7 +46,7 @@ const videoSchema = new mongoose.Schema({
     default: Date.now
   }
 });
-const Video = mongoose.model("Video", videoSchema);
+const Video = mongoose.model("Video", videoSchema, "videoQueue");
 
 // === Pixeldrain Upload ===
 async function uploadToPixeldrain(filePath) {
