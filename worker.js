@@ -1,3 +1,5 @@
+// worker.js
+
 import axios from "axios";
 import ffmpegPath from "ffmpeg-static";
 import ffmpeg from "fluent-ffmpeg";
@@ -5,33 +7,45 @@ import tmp from "tmp";
 import fs from "fs-extra";
 import mongoose from "mongoose";
 import FormData from "form-data";
-import http from 'http';
+import http from "http";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 http.createServer((req, res) => {
   res.writeHead(200);
-  res.end("Background worker läuft.");
+  res.end("🎥 Background Worker läuft.");
 }).listen(process.env.PORT || 3000);
 
+// === MongoDB verbinden ===
+const mongoUri = process.env.MONGODB_URI;
+if (!mongoUri) {
+  console.error("❌ MONGODB_URI ist nicht gesetzt.");
+  process.exit(1);
+}
+await mongoose.connect(mongoUri);
+console.log("✅ Mit MongoDB verbunden");
+
+// === FFmpeg konfigurieren ===
 ffmpeg.setFfmpegPath(ffmpegPath);
 
-// === Schema wie in deiner Webseite ===
+// === Video-Modell ===
 const videoSchema = new mongoose.Schema({
-  title: String,
+  title: { type: String, required: true },
   description: String,
   categories: [String],
   originalFilename: String,
   status: {
     type: String,
-    enum: ['pending', 'processing', 'completed', 'failed'],
+    enum: ['pending', 'processing', 'done', 'failed'],
     default: 'pending'
   },
-  embedUrl: String,
+  url: String,
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
-
 const Video = mongoose.model("Video", videoSchema);
 
 // === Pixeldrain Upload ===
@@ -39,27 +53,25 @@ async function uploadToPixeldrain(filePath) {
   const data = new FormData();
   data.append("file", fs.createReadStream(filePath));
 
-  const res = await axios.post("https://pixeldrain.com/api/file", data, {
+  const uploadRes = await axios.post("https://pixeldrain.com/api/file", data, {
     headers: {
       ...data.getHeaders(),
       Authorization: `Bearer ${process.env.PIXELDRAIN_API_KEY}`
     }
   });
 
-  if (!res.data?.id) throw new Error("Pixeldrain Upload fehlgeschlagen");
+  if (!uploadRes.data?.id) throw new Error("❌ Pixeldrain Upload fehlgeschlagen");
 
-  // Versteckt + embedding aktivieren
-  await axios.post(`https://pixeldrain.com/api/file/${res.data.id}`, {
-    hidden: true,
-    allow_embed: true
-  }, {
-    headers: { Authorization: `Bearer ${process.env.PIXELDRAIN_API_KEY}` }
-  });
+  await axios.post(
+    `https://pixeldrain.com/api/file/${uploadRes.data.id}`,
+    { hidden: true, allow_embed: true },
+    { headers: { Authorization: `Bearer ${process.env.PIXELDRAIN_API_KEY}` } }
+  );
 
-  return `https://pixeldrain.com/u/${res.data.id}`;
+  return `https://pixeldrain.com/u/${uploadRes.data.id}`;
 }
 
-// === Videopfad holen und verarbeiten ===
+// === Video verarbeiten ===
 async function processVideo(videoDoc) {
   console.log("🔧 Verarbeite Video:", videoDoc._id);
 
@@ -67,41 +79,41 @@ async function processVideo(videoDoc) {
   const outputTmp = tmp.tmpNameSync({ postfix: ".mp4" });
 
   try {
-    // 1. Lade Originalvideo von Backblaze herunter
     const downloadUrl = `${process.env.B2_DOWNLOAD_URL}/file/${process.env.B2_BUCKET_NAME}/${videoDoc.originalFilename}`;
     const response = await axios.get(downloadUrl, { responseType: "stream" });
 
-    const writer = fs.createWriteStream(inputTmp);
-    response.data.pipe(writer);
+    const inputStream = fs.createWriteStream(inputTmp);
+    response.data.pipe(inputStream);
 
     await new Promise((resolve, reject) => {
-      writer.on("finish", resolve);
-      writer.on("error", reject);
+      inputStream.on("finish", resolve);
+      inputStream.on("error", reject);
     });
 
-    // 2. ffmpeg: Metadaten strippen und komprimieren
     await new Promise((resolve, reject) => {
       ffmpeg(inputTmp)
-        .outputOptions("-map_metadata -1")
-        .videoCodec("libx264")
-        .audioCodec("aac")
-        .outputOptions("-crf 28")
+        .outputOptions([
+          "-map_metadata", "-1",
+          "-vf", "scale=-2:1080",
+          "-c:v", "libx264",
+          "-preset", "slow",
+          "-crf", "23",
+          "-c:a", "aac"
+        ])
         .on("end", resolve)
         .on("error", reject)
         .save(outputTmp);
     });
 
-    // 3. Zu Pixeldrain hochladen
     const pixeldrainUrl = await uploadToPixeldrain(outputTmp);
 
-    // 4. MongoDB-Dokument aktualisieren
-    videoDoc.status = "completed";
-    videoDoc.embedUrl = pixeldrainUrl;
+    videoDoc.status = "done";
+    videoDoc.url = pixeldrainUrl;
     await videoDoc.save();
 
-    console.log("✅ Upload abgeschlossen:", pixeldrainUrl);
+    console.log("✅ Fertig verarbeitet:", pixeldrainUrl);
   } catch (err) {
-    console.error("❌ Fehler:", err);
+    console.error("❌ Fehler bei der Verarbeitung:", err);
     videoDoc.status = "failed";
     await videoDoc.save();
   } finally {
@@ -110,18 +122,29 @@ async function processVideo(videoDoc) {
   }
 }
 
-// === Worker holt einen neuen Job ===
-export default async function runWorker() {
-  const job = await Video.findOneAndUpdate(
-    { status: "pending" },
-    { status: "processing" },
-    { new: true }
-  );
+// === Worker-Loop ===
+async function runWorkerLoop() {
+  console.log("🔁 Starte Video-Worker-Loop...");
 
-  if (!job) {
-    console.log("📭 Keine Jobs in der Warteschlange.");
-    return;
+  while (true) {
+    try {
+      const job = await Video.findOneAndUpdate(
+        { status: "pending" },
+        { status: "processing" },
+        { new: true }
+      );
+
+      if (!job) {
+        console.log("⏳ Keine offenen Videos. Warte 30 Sekunden...");
+        await new Promise(resolve => setTimeout(resolve, 30_000));
+        continue;
+      }
+
+      await processVideo(job);
+    } catch (err) {
+      console.error("❌ Worker-Fehler:", err);
+    }
   }
-
-  await processVideo(job);
 }
+
+runWorkerLoop();
