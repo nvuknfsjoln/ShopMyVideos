@@ -9,10 +9,10 @@ async function start() {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log("✅ MongoDB verbunden");
 
-    // Worker einmal ausführen
+    // Worker starten
     await runWorker();
 
-    // Optional: Worker alle 30 Sekunden wiederholen (kann man anpassen oder auskommentieren)
+    // Optional regelmäßig
     // setInterval(runWorker, 30 * 1000);
   } catch (err) {
     console.error("❌ Fehler beim Start:", err);
