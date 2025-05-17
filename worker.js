@@ -6,7 +6,10 @@ import fs from "fs-extra";
 import B2 from "backblaze-b2";
 import mongoose from "mongoose";
 import FormData from "form-data";
-import http from 'http';
+import http from "http";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 http.createServer((req, res) => {
   res.writeHead(200);
@@ -15,12 +18,16 @@ http.createServer((req, res) => {
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
-// MongoDB Video Model
+// MongoDB Video Model (Schema passt zum Web-Modell)
 const videoSchema = new mongoose.Schema({
-  _id: String,
-  sourcePath: String, // Pfad in Backblaze B2
+  title: String,
+  description: String,
+  categories: [String],
+  originalFilename: String,
   status: String,
-  pixeldrainUrl: String
+  sourcePath: String,
+  embedUrl: String,
+  createdAt: Date
 }, { strict: false });
 
 const Video = mongoose.model("Video", videoSchema);
@@ -50,7 +57,7 @@ async function uploadToPixeldrain(filePath) {
   return `https://pixeldrain.com/u/${res.data.id}`;
 }
 
-// Datei von Backblaze B2 herunterladen
+// Backblaze B2: Download
 async function downloadFromB2(b2Path, targetPath) {
   const b2 = new B2({
     applicationKeyId: process.env.B2_KEY_ID,
@@ -59,19 +66,10 @@ async function downloadFromB2(b2Path, targetPath) {
 
   await b2.authorize();
 
-  const downloadUrl = await b2.getDownloadAuthorization({
-    bucketId: process.env.B2_BUCKET_ID,
-    fileNamePrefix: b2Path,
-    validDurationInSeconds: 3600
-  });
-
   const url = `${process.env.B2_DOWNLOAD_URL}/file/${process.env.B2_BUCKET_NAME}/${b2Path}`;
 
   const response = await axios.get(url, {
-    responseType: "stream",
-    headers: {
-      Authorization: downloadUrl.authorizationToken || ""  // falls benötigt
-    }
+    responseType: "stream"
   });
 
   const writer = fs.createWriteStream(targetPath);
@@ -83,7 +81,7 @@ async function downloadFromB2(b2Path, targetPath) {
   });
 }
 
-// Video verarbeiten (Metadaten entfernen, komprimieren)
+// Verarbeitung
 async function processVideo(videoDoc) {
   console.log("🔧 Verarbeite Video:", videoDoc._id);
 
@@ -91,13 +89,11 @@ async function processVideo(videoDoc) {
   const outputTmp = tmp.tmpNameSync({ postfix: ".mp4" });
 
   try {
-    // Datei von B2 herunterladen
     await downloadFromB2(videoDoc.sourcePath, inputTmp);
 
-    // ffmpeg verarbeiten (Metadaten entfernen, codec & crf einstellen)
     await new Promise((resolve, reject) => {
       ffmpeg(inputTmp)
-        .outputOptions("-map_metadata -1") // Metadaten entfernen
+        .outputOptions("-map_metadata -1")
         .videoCodec("libx264")
         .audioCodec("aac")
         .outputOptions("-crf 28")
@@ -106,27 +102,24 @@ async function processVideo(videoDoc) {
         .save(outputTmp);
     });
 
-    // Zu Pixeldrain hochladen
-    const pixeldrainUrl = await uploadToPixeldrain(outputTmp);
+    const embedUrl = await uploadToPixeldrain(outputTmp);
 
-    // MongoDB Update
     videoDoc.status = "completed";
-    videoDoc.pixeldrainUrl = pixeldrainUrl;
+    videoDoc.embedUrl = embedUrl;
     await videoDoc.save();
 
-    console.log("✅ Upload abgeschlossen:", pixeldrainUrl);
+    console.log("✅ Upload abgeschlossen:", embedUrl);
   } catch (err) {
     console.error("❌ Fehler:", err);
     videoDoc.status = "failed";
     await videoDoc.save();
   } finally {
-    // Temporäre Dateien löschen
     fs.removeSync(inputTmp);
     fs.removeSync(outputTmp);
   }
 }
 
-// Worker: 1 Job aus der Queue holen und verarbeiten
+// Worker
 export default async function runWorker() {
   const job = await Video.findOneAndUpdate(
     { status: "pending" },
